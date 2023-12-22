@@ -111,9 +111,7 @@ int main()
 						cin >> num;
 
 						test.insertNode(root, num);
-
-						cout << "Элемент успешно вставлен";
-
+	
 						test.printQuit();
 					}
 					break;
@@ -127,8 +125,6 @@ int main()
 						cin >> num;
 
 						test.deleteNode(root, num);
-
-						cout << "Элемент успешно удален";
 
 						test.printQuit();
 					}

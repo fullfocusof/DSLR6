@@ -79,8 +79,15 @@ void RBTreeInterraction::insertNode(RBTree*& root, int data)
 	}
 	else if (data < parent->data)
 		parent->left = newNode;
-	else
+	else if (data > parent->data)
 		parent->right = newNode;
+	else
+	{
+		cout << "Данный элемент уже существует" << endl;
+		return;
+	}
+
+	cout << "Элемент успешно вставлен" << endl;
 
 	balanceTreeIns(root, newNode);
 }
@@ -96,7 +103,6 @@ void RBTreeInterraction::balanceTreeIns(RBTree*& root, RBTree* node)
 		{
 			RBTree* uncle = grandparent->right;
 
-			// Case 1: Uncle is also red - Recoloring
 			if (uncle != nullptr && uncle->color == NodeColor::RED)
 			{
 				parent->color = NodeColor::BLACK;
@@ -106,25 +112,24 @@ void RBTreeInterraction::balanceTreeIns(RBTree*& root, RBTree* node)
 			}
 			else
 			{
-				// Case 2: Node is right child of parent - Left rotation
 				if (node == parent->right)
 				{
 					leftRotate(root, parent);
 					node = parent;
 					parent = node->parent;
 				}
-
-				// Case 3: Node is left child of parent - Right rotation
-				rightRotate(root, grandparent);
-				std::swap(parent->color, grandparent->color);
-				node = parent;
+				else if (node == parent->left)
+				{
+					rightRotate(root, grandparent);
+					swap(parent->color, grandparent->color);
+					node = parent;
+				}
 			}
 		}
 		else
 		{
 			RBTree* uncle = grandparent->left;
 
-			// Case 1: Uncle is also red - Recoloring
 			if (uncle != nullptr && uncle->color == NodeColor::RED)
 			{
 				parent->color = NodeColor::BLACK;
@@ -134,18 +139,18 @@ void RBTreeInterraction::balanceTreeIns(RBTree*& root, RBTree* node)
 			}
 			else
 			{
-				// Case 2: Node is left child of parent - Right rotation
 				if (node == parent->left)
 				{
 					rightRotate(root, parent);
 					node = parent;
 					parent = node->parent;
 				}
-
-				// Case 3: Node is right child of parent - Left rotation
-				leftRotate(root, grandparent);
-				std::swap(parent->color, grandparent->color);
-				node = parent;
+				else if (node == parent->right)
+				{
+					leftRotate(root, grandparent);
+					swap(parent->color, grandparent->color);
+					node = parent;
+				}		
 			}
 		}
 	}
@@ -172,6 +177,8 @@ void RBTreeInterraction::leftRotate(RBTree*& root, RBTree* node)
 
 	rightChild->left = node;
 	node->parent = rightChild;
+
+	cout << "Левый поворот вокруг " << node->data << endl;
 }
 
 void RBTreeInterraction::rightRotate(RBTree*& root, RBTree* node)
@@ -193,6 +200,8 @@ void RBTreeInterraction::rightRotate(RBTree*& root, RBTree* node)
 
 	leftChild->right = node;
 	node->parent = leftChild;
+
+	cout << "Правый поворот вокруг " << node->data << endl;
 }
 
 RBTree* RBTreeInterraction::minValueNode(RBTree* node)
@@ -211,7 +220,6 @@ void RBTreeInterraction::deleteNode(RBTree*& root, int data)
 	RBTree* parent = nullptr;
 	bool found = false;
 
-	// Find the node to delete
 	while (node != nullptr)
 	{
 		if (data == node->data)
@@ -230,7 +238,7 @@ void RBTreeInterraction::deleteNode(RBTree*& root, int data)
 
 	if (!found)
 	{
-		std::cout << "Node with data " << data << " not found in the tree." << std::endl;
+		cout << "Узел со значением " << data << " не найден" << endl;
 		return;
 	}
 
@@ -262,7 +270,7 @@ void RBTreeInterraction::deleteNode(RBTree*& root, int data)
 	{
 		RBTree* successor = minValueNode(node->right);
 		node->data = successor->data;
-		deleteNode(root, successor->data);
+		deleteNode(root, successor->data); // отдельно для удаления корня
 	}
 }
 
@@ -271,36 +279,34 @@ void RBTreeInterraction::balanceTreeDel(RBTree*& root, RBTree* node)
 	if (node == root)
 		return;
 
-	RBTree* sibling;
+	RBTree* brother;
 	bool leftChild = false;
 
 	if (node->parent->left == node)
 	{
-		sibling = node->parent->right;
+		brother = node->parent->right;
 		leftChild = true;
 	}
 	else
-		sibling = node->parent->left;
+		brother = node->parent->left;
 
-	// Case 1: Sibling is red - Rotate to make it black
-	if (sibling->color == NodeColor::RED)
+	if (brother->color == NodeColor::RED)
 	{
 		if (leftChild)
 			leftRotate(root, node->parent);
 		else
 			rightRotate(root, node->parent);
 
-		sibling->color = NodeColor::BLACK;
+		brother->color = NodeColor::BLACK;
 		node->parent->color = NodeColor::RED;
 		balanceTreeDel(root, node);
 	}
 	else
 	{
-		// Case 2: Sibling is black, and both children are black
-		if ((sibling->left == nullptr || sibling->left->color == NodeColor::BLACK) &&
-			(sibling->right == nullptr || sibling->right->color == NodeColor::BLACK))
+		if ((brother->left == nullptr || brother->left->color == NodeColor::BLACK) &&
+			(brother->right == nullptr || brother->right->color == NodeColor::BLACK))
 		{
-			sibling->color = NodeColor::RED;
+			brother->color = NodeColor::RED;
 			if (node->parent->color == NodeColor::BLACK)
 				balanceTreeDel(root, node->parent);
 			else
@@ -310,37 +316,36 @@ void RBTreeInterraction::balanceTreeDel(RBTree*& root, RBTree* node)
 		{
 			if (leftChild)
 			{
-				// Case 3: Sibling is black, sibling's left child is red, sibling's right child is black
-				if (sibling->right == nullptr || sibling->right->color == NodeColor::BLACK)
+				if (brother->right == nullptr || brother->right->color == NodeColor::BLACK)
 				{
-					leftRotate(root, sibling);
-					sibling->color = NodeColor::RED;
-					sibling->left->color = NodeColor::BLACK;
-					sibling = sibling->left;
+					leftRotate(root, brother);
+					brother->color = NodeColor::RED;
+					brother->left->color = NodeColor::BLACK;
+					brother = brother->left;
 				}
-
-				// Case 4: Sibling is black, sibling's right child is red
-				rightRotate(root, node->parent);
-				std::swap(node->parent->color, sibling->color);
-				sibling->right->color = NodeColor::BLACK;
+				else if (brother->right == nullptr || brother->right->color == NodeColor::RED)
+				{
+					rightRotate(root, node->parent);
+					swap(node->parent->color, brother->color);
+					brother->right->color = NodeColor::BLACK;
+				}
 			}
 			else
 			{
-				// Case 3: Sibling is black, sibling's right child is red, sibling's left child is black
-				if (sibling->left == nullptr || sibling->left->color == NodeColor::BLACK)
+				if (brother->left == nullptr || brother->left->color == NodeColor::BLACK)
 				{
-					rightRotate(root, sibling);
-					sibling->color = NodeColor::RED;
-					sibling->right->color = NodeColor::BLACK;
-					sibling = sibling->right;
+					rightRotate(root, brother);
+					brother->color = NodeColor::RED;
+					brother->right->color = NodeColor::BLACK;
+					brother = brother->right;
 				}
-
-				// Case 4: Sibling is black, sibling's left child is red
-				leftRotate(root, node->parent);
-				std::swap(node->parent->color, sibling->color);
-				sibling->left->color = NodeColor::BLACK;
+				else if (brother->left == nullptr || brother->left->color == NodeColor::RED)
+				{
+					leftRotate(root, node->parent);
+					swap(node->parent->color, brother->color);
+					brother->left->color = NodeColor::BLACK;
+				}				
 			}
-
 			node->parent->color = NodeColor::BLACK;
 		}
 	}
